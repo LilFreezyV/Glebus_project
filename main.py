@@ -28,6 +28,10 @@ def echo_all(message):
     except Exception as err:
         bot_reply = f'Товар не найден, проверьте правильность введенных данных ({str(err)})'
     bot.send_message(message.chat.id, bot_reply)
+    with open('log.txt', 'a', encoding='utf-8') as f:
+        f.write(bot_reply + '\t\n\n')
+        f.close()
+
 
 
 bot.polling(none_stop=True)
