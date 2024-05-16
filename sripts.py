@@ -11,17 +11,34 @@ from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
+from googletrans import Translator
+
+
+translator = Translator()
 
 
 def get_feedback(url):
-    const = ['ма', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр', 'январ', 'феврал', 'март', 'апрел', 'сегодня', 'вчера']
+    const = ['ма', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр', 'январ', 'феврал', 'март', 'апрел',
+             'сегодня', 'вчера']
     service = Service()  # указываем путь до драйвера
     browser = webdriver.Chrome(service=service)
     browser.get(url)
     time.sleep(2)
     review = browser.find_element(By.CLASS_NAME, 'product-feedbacks__main')
     if len(review.text.split(' ')[0]) > 0:
-        text = review.text.split()[14:]
+        text = list(filter(str.isdigit and str.isascii and str.isalpha,
+                           review.text.replace(')', '').replace('(', '').split()[14:]))
+        d = {}
+        for el in text:
+            d[el] = text.count(el)
+        maxi = max(d.values())
+        key_word = ''
+        for key, value in d.items():
+            if value == maxi:
+                key_word = key
+        for el in text:
+            if key_word in el:
+                del text[text.index(el)]
         for el in text:
             for i in const:
                 if i in el.lower():
@@ -31,7 +48,8 @@ def get_feedback(url):
         for el in text:
             if len(el.split(':')) == 2:
                 del text[text.index(el)]
-        return ' '.join(text)
+        result = translator.translate(' '.join(text), dest='en').text
+        return result
     return 'У данного товара нет отзывов'
 
     time.sleep(10)
@@ -138,11 +156,11 @@ def main(_id: str, _url: str):
     _id = _id  # артикул товара
     start = datetime.datetime.now()  # запишем время старта
     data = parser(_id)
-    print(data)
 
     end = datetime.datetime.now()  # запишем время завершения кода
     total = end - start  # расчитаем время затраченное на выполнение кода
     print("Затраченное время:" + str(total))
-    return data[0]['name'], data[0]['price'], data[0]['reviewRating'], data[0]['link'], get_feedback(_url)[:500]
+    return data[0]['name'], data[0]['price'], data[0]['reviewRating'], data[0]['link'], get_feedback(_url)
+
 
 print(get_feedback('https://www.wildberries.ru/catalog/176186929/feedbacks?imtId=160892001'))
